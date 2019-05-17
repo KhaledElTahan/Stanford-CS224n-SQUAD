@@ -37,6 +37,11 @@ def main(args):
     device, gpu_ids = util.get_available_devices()
     args.batch_size *= max(1, len(gpu_ids))
 
+    if args.cudnn is True:
+        torch.backends.cudnn.enabled=True
+    else:
+        torch.backends.cudnn.enabled=False
+
     # Get embeddings
     log.info('Loading embeddings...')
     word_vectors = util.torch_from_json(args.word_emb_file)

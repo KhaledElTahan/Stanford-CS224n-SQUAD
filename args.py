@@ -205,6 +205,11 @@ def add_common_args(parser):
 
 def add_train_test_args(parser):
     """Add arguments common to train.py and test.py"""
+    parser.add_argument('--cudnn',
+                        type=lambda s: s.lower().startswith('t'),
+                        required=False,
+                        default=True,
+                        help='Name to identify training or test run.')
     parser.add_argument('--name',
                         '-n',
                         type=str,

@@ -33,6 +33,11 @@ def main(args):
     log.info('Args: {}'.format(dumps(vars(args), indent=4, sort_keys=True)))
     args.batch_size *= max(1, len(args.gpu_ids))
 
+    if args.cudnn is True:
+        torch.backends.cudnn.enabled=True
+    else:
+        torch.backends.cudnn.enabled=False
+
     # Set random seed
     log.info('Using random seed {}...'.format(args.seed))
     random.seed(args.seed)

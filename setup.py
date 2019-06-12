@@ -72,9 +72,7 @@ def download(args):
     run(['python', '-m', 'spacy', 'download', 'en'])
 
 
-def word_tokenize(sent, Bert=True): ## KH: Replace implementation with BERT Tokenizer
-    #doc = nlp(sent) ## KH: nlp = spacy.blank("en") => BERT Tokenizer
-    #return [token.text for token in doc]
+def word_tokenize(sent, Bert=True):
     if Bert:
         return tokenizer.tokenize(sent)
     else:
@@ -82,12 +80,24 @@ def word_tokenize(sent, Bert=True): ## KH: Replace implementation with BERT Toke
         return [token.text for token in doc]
 
 
+def all_suffixes(s):
+    return [s[-i:] for i in range(len(s), 0, -1)]
+
+
+def find_index(text, token, current_idx):
+    for s in all_suffixes(token):
+        idx = text.find(token, current_idx)
+        if idx >= 0:
+            return idx
+
+    return -1
+
 
 def convert_idx(text, tokens):
     current = 0
     spans = []
     for token in tokens:
-        current = text.find(token, current)
+        current = find_index(text, token, current)
         if current < 0:
             print("Token {} cannot be found".format(token))
             print("DEBUG:\n {0}\n {1}\n".format(current, text))
@@ -110,7 +120,7 @@ def process_file(filename, data_type, word_counter, char_counter):
                     "''", '" ').replace("``", '" ')
                 context_tokens = word_tokenize(context)
                 context_chars = [list(token) for token in context_tokens]
-                spans = convert_idx(context, word_tokenize(context, False))
+                spans = convert_idx(context, context_tokens)
                 for token in context_tokens:
                     word_counter[token] += len(para["qas"])
                     for char in token:

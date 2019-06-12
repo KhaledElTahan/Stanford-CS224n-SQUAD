@@ -86,7 +86,7 @@ def all_suffixes(s):
 
 def find_index(text, token, current_idx):
     for s in all_suffixes(token):
-        idx = text.find(token, current_idx)
+        idx = text.find(s, current_idx)
         if idx >= 0:
             return idx
 
@@ -95,7 +95,7 @@ def find_index(text, token, current_idx):
 
 def clean_text(text):
     cleaner = BasicTokenizer()
-    return cleaner._run_strip_accents(text)
+    return cleaner._run_strip_accents(text).lower()
 
 
 def convert_idx(text, tokens):

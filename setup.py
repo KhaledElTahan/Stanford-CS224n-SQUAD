@@ -23,7 +23,7 @@ from collections import Counter
 from subprocess import run
 from tqdm import tqdm
 from zipfile import ZipFile
-from pytorch_pretrained_bert import BertTokenizer
+from pytorch_pretrained_bert import BertTokenizer, BasicTokenizer
 
 
 def download_url(url, output_path, show_progress=True):
@@ -93,9 +93,15 @@ def find_index(text, token, current_idx):
     return -1
 
 
+def clean_text(text):
+    cleaner = BasicTokenizer()
+    return cleaner._run_strip_accents(text)
+
+
 def convert_idx(text, tokens):
     current = 0
     spans = []
+    text = clean_text(text)
     for token in tokens:
         current = find_index(text, token, current)
         if current < 0:

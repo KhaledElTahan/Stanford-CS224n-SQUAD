@@ -209,7 +209,7 @@ def add_train_test_args(parser):
                         type=lambda s: s.lower().startswith('t'),
                         required=False,
                         default=True,
-                        help='Name to identify training or test run.')
+                        help='Control whether to use CuDNN or not.')
     parser.add_argument('--name',
                         '-n',
                         type=str,

@@ -23,6 +23,7 @@ from collections import Counter
 from subprocess import run
 from tqdm import tqdm
 from zipfile import ZipFile
+from pytorch_pretrained_bert import BertTokenizer
 
 
 def download_url(url, output_path, show_progress=True):
@@ -71,9 +72,11 @@ def download(args):
     run(['python', '-m', 'spacy', 'download', 'en'])
 
 
-def word_tokenize(sent):
-    doc = nlp(sent)
-    return [token.text for token in doc]
+def word_tokenize(sent): ## KH: Replace implementation with BERT Tokenizer
+    #doc = nlp(sent) ## KH: nlp = spacy.blank("en") => BERT Tokenizer
+    #return [token.text for token in doc]
+
+    return tokenizer.tokenize(sent)
 
 
 def convert_idx(text, tokens):
@@ -387,6 +390,9 @@ if __name__ == '__main__':
 
     # Import spacy language model
     nlp = spacy.blank("en")
+
+    # Load Tokenizer
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
     # Preprocess dataset
     args_.train_file = url_to_data_path(args_.train_url)

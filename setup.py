@@ -392,7 +392,9 @@ if __name__ == '__main__':
     nlp = spacy.blank("en")
 
     # Load Tokenizer
+    print("Loading Bert Tokenizer..")
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    print("Done Loading Bert Tokenizer")
 
     # Preprocess dataset
     args_.train_file = url_to_data_path(args_.train_url)

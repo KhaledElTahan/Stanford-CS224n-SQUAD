@@ -72,11 +72,15 @@ def download(args):
     run(['python', '-m', 'spacy', 'download', 'en'])
 
 
-def word_tokenize(sent): ## KH: Replace implementation with BERT Tokenizer
+def word_tokenize(sent, Bert=True): ## KH: Replace implementation with BERT Tokenizer
     #doc = nlp(sent) ## KH: nlp = spacy.blank("en") => BERT Tokenizer
     #return [token.text for token in doc]
+    if Bert:
+        return tokenizer.tokenize(sent)
+    else:
+        doc = nlp(sent)
+        return [token.text for token in doc]
 
-    return tokenizer.tokenize(sent)
 
 
 def convert_idx(text, tokens):
@@ -106,7 +110,7 @@ def process_file(filename, data_type, word_counter, char_counter):
                     "''", '" ').replace("``", '" ')
                 context_tokens = word_tokenize(context)
                 context_chars = [list(token) for token in context_tokens]
-                spans = convert_idx(context, context_tokens)
+                spans = convert_idx(context, word_tokenize(context, False))
                 for token in context_tokens:
                     word_counter[token] += len(para["qas"])
                     for char in token:

@@ -103,6 +103,10 @@ def convert_idx(text, tokens):
     spans = []
     text = clean_text(text)
     for token in tokens:
+        
+        if token.startswith("##"):
+            token = token[2:]
+
         current = find_index(text, token, current)
         if current < 0:
             print("Token {} cannot be found".format(token))

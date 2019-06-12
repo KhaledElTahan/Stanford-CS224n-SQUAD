@@ -86,6 +86,7 @@ def convert_idx(text, tokens):
         current = text.find(token, current)
         if current < 0:
             print("Token {} cannot be found".format(token))
+            print("DEBUG:\n {0}\n {1}\n".format(current, text))
             raise Exception()
         spans.append((current, current + len(token)))
         current += len(token)

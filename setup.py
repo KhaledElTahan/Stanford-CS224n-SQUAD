@@ -265,8 +265,8 @@ def get_bert_embedding(train_examples, dev_examples):
         tokens_tensor = torch.tensor([indexed_tokens])
         segments_tensors = torch.tensor([ids])
 
-    tokens_tensor = tokens_tensor.to('cuda')
-    segments_tensors = segments_tensors.to('cuda')
+        tokens_tensor = tokens_tensor.to('cuda')
+        segments_tensors = segments_tensors.to('cuda')
 
         with torch.no_grad():
             encoded_layers, _ = bert(tokens_tensor, segments_tensors)

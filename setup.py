@@ -151,7 +151,7 @@ def convert_idx(text, tokens):
         if token.startswith("##"):
             token = token[2:]
 
-        token - clean_text(token)
+        token = clean_text(token)
 
         current = find_index(text, token, current)
         if current < 0:

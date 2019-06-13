@@ -92,11 +92,52 @@ def find_index(text, token, current_idx):
 
     return -1
 
+def _is_chinese_char(cp):
+    """Checks whether CP is the codepoint of a CJK character."""
+    # This defines a "chinese character" as anything in the CJK Unicode block:
+    #   https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)
+    #
+    # Note that the CJK Unicode block is NOT all Japanese and Korean characters,
+    # despite its name. The modern Korean Hangul alphabet is a different block,
+    # as is Japanese Hiragana and Katakana. Those alphabets are used to write
+    # space-separated words, so they are not treated specially and handled
+    # like the all of the other languages.
+    if ((cp >= 0x4E00 and cp <= 0x9FFF) or  #
+            (cp >= 0x3400 and cp <= 0x4DBF) or  #
+            (cp >= 0x20000 and cp <= 0x2A6DF) or  #
+            (cp >= 0x2A700 and cp <= 0x2B73F) or  #
+            (cp >= 0x2B740 and cp <= 0x2B81F) or  #
+            (cp >= 0x2B820 and cp <= 0x2CEAF) or
+            (cp >= 0xF900 and cp <= 0xFAFF) or  #
+            (cp >= 0x2F800 and cp <= 0x2FA1F)):  #
+        return True
+
+    return False
+
+def _tokenize_chinese_chars(text):
+    """Adds whitespace around any CJK character."""
+    output = []
+    for char in text:
+        cp = ord(char)
+        if _is_chinese_char(cp):
+            output.append(" ")
+        else:
+            output.append(char)
+    return "".join(output)
+
+# 
+# [UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]
 
 def clean_text(text):
     cleaner = BasicTokenizer()
     ret_text = cleaner._run_strip_accents(text)
-    ret_text = cleaner._tokenize_chinese_chars(ret_text)
+    ret_text = _tokenize_chinese_chars(ret_text)
+
+    ret_text = ret_text.replace("[UNK]", " ")
+    ret_text = ret_text.replace("[SEP]", " ")
+    ret_text = ret_text.replace("[PAD]", " ")
+    ret_text = ret_text.replace("[CLS]", " ")
+    ret_text = ret_text.replace("[MASK]", " ")
 
     return ret_text.lower()
 
@@ -109,6 +150,8 @@ def convert_idx(text, tokens):
         
         if token.startswith("##"):
             token = token[2:]
+
+        token - clean_text(token)
 
         current = find_index(text, token, current)
         if current < 0:
@@ -421,7 +464,7 @@ if __name__ == '__main__':
 
     # Load Tokenizer
     print("Loading Bert Tokenizer..")
-    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     print("Done Loading Bert Tokenizer")
 
     # Preprocess dataset

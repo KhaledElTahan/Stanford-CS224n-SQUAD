@@ -96,7 +96,7 @@ def find_index(text, token, current_idx):
 def clean_text(text):
     cleaner = BasicTokenizer()
     ret_text = cleaner._run_strip_accents(text)
-    ret_text = cleaner._tokenize_chinese_chars(text)
+    ret_text = cleaner._tokenize_chinese_chars(ret_text)
 
     return ret_text.lower()
 

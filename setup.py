@@ -125,8 +125,6 @@ def _tokenize_chinese_chars(text):
             output.append(char)
     return "".join(output)
 
-# 
-# [UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]
 
 def clean_text(text):
     cleaner = BasicTokenizer()
@@ -139,27 +137,30 @@ def clean_text(text):
     ret_text = ret_text.replace("[CLS]", " ")
     ret_text = ret_text.replace("[MASK]", " ")
 
+    if ret_text.startswith("##"):
+        ret_text = ret_text[2:]
+
     return ret_text.lower()
 
 
 def convert_idx(text, tokens):
+    new_current = 0
     current = 0
     spans = []
     text = clean_text(text)
     for token in tokens:
-        
-        if token.startswith("##"):
-            token = token[2:]
-
         token = clean_text(token)
+        new_current = find_index(text, token, current)
+        if new_current < 0:
+            ## print("Token {} cannot be found".format(token))
+            ## print("DEBUG:\n {0}\n {1}\n".format(current, text))
+            ## raise Exception()
+            current += 1
+        else:
+            current = new_current + len(token)
 
-        current = find_index(text, token, current)
-        if current < 0:
-            print("Token {} cannot be found".format(token))
-            print("DEBUG:\n {0}\n {1}\n".format(current, text))
-            raise Exception()
         spans.append((current, current + len(token)))
-        current += len(token)
+        
     return spans
 
 

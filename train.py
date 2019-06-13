@@ -47,7 +47,7 @@ def main(args):
 
     # Get embeddings
     log.info('Loading embeddings...')
-    word_vectors = util.torch_from_json(args.word_emb_file)
+    word_vectors = util.torch_from_json(args.word_emb_file) ## KH: Control Embedding from here
 
     # Get model
     log.info('Building model...')
@@ -55,7 +55,7 @@ def main(args):
                   hidden_size=args.hidden_size,
                   drop_prob=args.drop_prob)
     model = nn.DataParallel(model, args.gpu_ids)
-    if args.load_path:
+    if args.load_path: ## KH: Finetuning only if on the same Model
         log.info('Loading checkpoint from {}...'.format(args.load_path))
         model, step = util.load_model(model, args.load_path, args.gpu_ids)
     else:

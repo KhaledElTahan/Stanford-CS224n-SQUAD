@@ -421,7 +421,7 @@ if __name__ == '__main__':
 
     # Load Tokenizer
     print("Loading Bert Tokenizer..")
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-uncased')
     print("Done Loading Bert Tokenizer")
 
     # Preprocess dataset

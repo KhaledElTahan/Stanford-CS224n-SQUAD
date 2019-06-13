@@ -142,27 +142,27 @@ def clean_text(text):
 
     return ret_text.lower()
 
+def _is_bad(token):
+    return token in ["[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"]
 
 def convert_idx(text, tokens):
-    new_current = 0
     current = 0
     spans = []
     text = clean_text(text)
     for token in tokens:
-        token = clean_text(token)
-        new_current = find_index(text, token, current)
-        if new_current < 0:
-            ## print("Token {} cannot be found".format(token))
-            ## print("DEBUG:\n {0}\n {1}\n".format(current, text))
-            ## raise Exception()
-            spans.append((current, current + 1))
+        spans.append((current, current + len(token)))
+        if _is_bad(token):
             current += 1
-        else:
-            spans.append((new_current, new_current + len(token)))
-            current = new_current + len(token)
-
-        
-        
+            continue
+            
+        token = clean_text(token)
+        current = find_index(text, token, current)
+        if current < 0:
+            print("Token {} cannot be found".format(token))
+            print("DEBUG:\n {0}\n {1}\n".format(current, text))
+            raise Exception()
+        spans.append((current, current + len(token)))
+        current += len(token)
     return spans
 
 

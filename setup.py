@@ -23,7 +23,7 @@ from collections import Counter
 from subprocess import run
 from tqdm import tqdm
 from zipfile import ZipFile
-from pytorch_pretrained_bert import BertTokenizer, BasicTokenizer
+from pytorch_pretrained_bert import BertTokenizer, BasicTokenizer, BertModel
 
 
 def download_url(url, output_path, show_progress=True):
@@ -227,6 +227,10 @@ def process_file(filename, data_type, word_counter, char_counter):
     return examples, eval_examples
 
 
+def get_bert_embedding(train_examples, dev_examples, word_counter):
+    print("Bert Embedding Prep-processing...")
+
+
 def get_embedding(counter, data_type, limit=-1, emb_file=None, vec_size=None, num_vectors=None):
     print("Pre-processing {} vectors...".format(data_type))
     embedding_dict = {}
@@ -239,7 +243,7 @@ def get_embedding(counter, data_type, limit=-1, emb_file=None, vec_size=None, nu
                 word = "".join(array[0:-vec_size])
                 vector = list(map(float, array[-vec_size:]))
                 if word in counter and counter[word] > limit:
-                    embedding_dict[word] = vector
+                    embedding_dict[word] = vector #KH: This is the line we should change
         print("{} / {} tokens have corresponding {} embedding vector".format(
             len(embedding_dict), len(filtered_elements), data_type))
     else:
@@ -432,15 +436,21 @@ def pre_process(args):
     # Process training set and use it to decide on the word/character vocabularies
     word_counter, char_counter = Counter(), Counter()
     train_examples, train_eval = process_file(args.train_file, "train", word_counter, char_counter)
-    word_emb_mat, word2idx_dict = get_embedding(
-        word_counter, 'word', emb_file=args.glove_file, vec_size=args.glove_dim, num_vectors=args.glove_num_vecs)
+
     char_emb_mat, char2idx_dict = get_embedding(
         char_counter, 'char', emb_file=None, vec_size=args.char_dim)
 
     # Process dev and test sets
     dev_examples, dev_eval = process_file(args.dev_file, "dev", word_counter, char_counter)
+
+    # Retrieving embedding for both Dev & Training Datasets
+    word_emb_mat, word2idx_dict = get_bert_embedding(train_examples, dev_examples, word_counter)
+
+    ## Building Features for both Dev & Training Datasets
     build_features(args, train_examples, "train", args.train_record_file, word2idx_dict, char2idx_dict)
     dev_meta = build_features(args, dev_examples, "dev", args.dev_record_file, word2idx_dict, char2idx_dict)
+
+    # Working on Test Examples
     if args.include_test_examples:
         test_examples, test_eval = process_file(args.test_file, "test", word_counter, char_counter)
         save(args.test_eval_file, test_eval, message="test eval")
@@ -457,6 +467,19 @@ def pre_process(args):
     save(args.dev_meta_file, dev_meta, message="dev meta")
 
 
+def LoadPretrainedBERT():
+    print("Loading Pretrained Bert Model")
+    bert = BertModel.from_pretrained('bert-base-uncased')
+
+    print("Evaluating Bert Model")
+    bert.eval()
+    
+    print("Moving Bert Model to GPU")
+    bert.to('cuda')
+
+    print("Bert Loading Completed..\n")
+
+
 if __name__ == '__main__':
     # Get command-line args
     args_ = get_setup_args()
@@ -471,6 +494,9 @@ if __name__ == '__main__':
     print("Loading Bert Tokenizer..")
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     print("Done Loading Bert Tokenizer")
+
+    # Load Bert Pretrained Model
+    bert = LoadPretrainedBERT()
 
     # Preprocess dataset
     args_.train_file = url_to_data_path(args_.train_url)

@@ -290,7 +290,10 @@ def get_bert_embedding(train_examples, dev_examples):
                     elif denom > 1:
                         embedding = [x / float(denom) for x in embedding]
 
-                    embedding_dict[token] += embedding
+                    if token in embedding_dict:
+                        embedding_dict[token] += embedding
+                    else:
+                        embedding_dict[token] = embedding
 
     NULL = "--NULL--"
     OOV = "--OOV--"

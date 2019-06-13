@@ -279,7 +279,7 @@ def get_bert_embedding(train_examples, dev_examples):
             layers = [layer_8, layer_9, layer_10, layer_11]
 
             for layer in layers:
-                for i in range(layer): # iterate over tokens
+                for i in range(len(layer)): # iterate over tokens
                     token = tokens[i]
                     embedding = layer[i]
 

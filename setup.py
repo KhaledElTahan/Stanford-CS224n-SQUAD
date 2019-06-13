@@ -142,16 +142,18 @@ def clean_text(text):
 
     return ret_text.lower()
 
+
 def _is_bad(token):
     return token in ["[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"]
+
 
 def convert_idx(text, tokens):
     current = 0
     spans = []
     text = clean_text(text)
     for token in tokens:
-        spans.append((current, current + len(token)))
         if _is_bad(token):
+            spans.append((current, current + len(token)))
             current += 1
             continue
             

@@ -262,6 +262,11 @@ def get_bert_embedding(train_examples, dev_examples):
 
         indexed_tokens = tokenizer.convert_tokens_to_ids(tokens)
 
+        if len(tokens) > 512:
+            tokens = tokens[:512]
+            indexed_tokens = indexed_tokens[:512]
+            ids = ids[:512]
+
         tokens_tensor = torch.tensor([indexed_tokens])
         segments_tensors = torch.tensor([ids])
 

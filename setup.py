@@ -248,7 +248,7 @@ def get_bert_embedding(train_examples, dev_examples):
 
     vec_size = 768
     embedding_dict = {}
-    examples = {**train_examples, **dev_examples}
+    examples = train_examples + dev_examples
 
     for i in tqdm(range(len(examples))):
         example = examples[i]

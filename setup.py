@@ -16,6 +16,7 @@ import os
 import spacy
 import ujson as json
 import urllib.request
+import torch
 
 from args import get_setup_args
 from codecs import open
@@ -184,6 +185,7 @@ def process_file(filename, data_type, word_counter, char_counter):
                 spans = convert_idx(context, context_tokens)
                 for token in context_tokens:
                     word_counter[token] += len(para["qas"])
+                    global_word_counter[token] += len(para["qas"])
                     for char in token:
                         char_counter[char] += len(para["qas"])
                 for qa in para["qas"]:
@@ -194,6 +196,7 @@ def process_file(filename, data_type, word_counter, char_counter):
                     ques_chars = [list(token) for token in ques_tokens]
                     for token in ques_tokens:
                         word_counter[token] += 1
+                        global_word_counter[token] += 1
                         for char in token:
                             char_counter[char] += 1
                     y1s, y2s = [], []
@@ -227,8 +230,76 @@ def process_file(filename, data_type, word_counter, char_counter):
     return examples, eval_examples
 
 
-def get_bert_embedding(train_examples, dev_examples, word_counter):
+def _create_segment_ids(tokens):
+    ids = [0] * len(tokens)
+
+    bit = 0
+    for i in range(len(tokens)):
+        ids[i] = bit
+
+        if tokens[i] == "[SEP]":
+            bit = 1 - bit
+
+    return ids
+
+
+def get_bert_embedding(train_examples, dev_examples):
     print("Bert Embedding Prep-processing...")
+
+    vec_size = 768
+    embedding_dict = {}
+    examples = {**train_examples, **dev_examples}
+
+    for i in tqdm(range(len(examples))):
+        example = examples[i]
+        context_tokens = example["context_tokens"]
+        context_ids = _create_segment_ids(context_tokens)
+        ques_tokens = example["ques_tokens"]
+        ques_ids = _create_segment_ids(ques_tokens)
+
+        tokens = context_tokens + ques_tokens
+        ids = context_ids + ques_ids
+
+        indexed_tokens = tokenizer.convert_tokens_to_ids(tokens)
+
+        tokens_tensor = torch.tensor([indexed_tokens])
+        segments_tensors = torch.tensor([ids])
+
+        with torch.no_grad():
+            encoded_layers, _ = bert(tokens_tensor, segments_tensors)
+
+            layer_8 = encoded_layers[8].tolist()[0]
+            layer_9 = encoded_layers[9].tolist()[0]
+            layer_10 = encoded_layers[10].tolist()[0]
+            layer_11 = encoded_layers[11].tolist()[0]
+
+            layers = [layer_8, layer_9, layer_10, layer_11]
+
+            for layer in layers:
+                for i in range(layer): # iterate over tokens
+                    token = tokens[i]
+                    embedding = layer[i]
+
+                    denom = global_word_counter[token]
+
+                    if denom == 0:
+                        denom = 1
+                    elif denom > 1:
+                        embedding = [x / float(denom) for x in embedding]
+
+                    embedding_dict[token] += embedding
+
+    NULL = "--NULL--"
+    OOV = "--OOV--"
+    token2idx_dict = {token: idx for idx, token in enumerate(embedding_dict.keys(), 2)}
+    token2idx_dict[NULL] = 0
+    token2idx_dict[OOV] = 1
+    embedding_dict[NULL] = [0. for _ in range(vec_size)]
+    embedding_dict[OOV] = [0. for _ in range(vec_size)]
+    idx2emb_dict = {idx: embedding_dict[token]
+                    for token, idx in token2idx_dict.items()}
+    emb_mat = [idx2emb_dict[idx] for idx in range(len(idx2emb_dict))]
+    return emb_mat, token2idx_dict
 
 
 def get_embedding(counter, data_type, limit=-1, emb_file=None, vec_size=None, num_vectors=None):
@@ -444,7 +515,7 @@ def pre_process(args):
     dev_examples, dev_eval = process_file(args.dev_file, "dev", word_counter, char_counter)
 
     # Retrieving embedding for both Dev & Training Datasets
-    word_emb_mat, word2idx_dict = get_bert_embedding(train_examples, dev_examples, word_counter)
+    word_emb_mat, word2idx_dict = get_bert_embedding(train_examples, dev_examples)
 
     ## Building Features for both Dev & Training Datasets
     build_features(args, train_examples, "train", args.train_record_file, word2idx_dict, char2idx_dict)
@@ -479,6 +550,8 @@ def LoadPretrainedBERT():
 
     print("Bert Loading Completed..\n")
 
+    return bert
+
 
 if __name__ == '__main__':
     # Get command-line args
@@ -497,6 +570,8 @@ if __name__ == '__main__':
 
     # Load Bert Pretrained Model
     bert = LoadPretrainedBERT()
+
+    global_word_counter = Counter()
 
     # Preprocess dataset
     args_.train_file = url_to_data_path(args_.train_url)
